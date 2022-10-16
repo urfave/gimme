@@ -5,21 +5,11 @@ VERSION := $(shell git describe --always --tags)
 
 # Affects sorting for CONTRIBUTORS file; unfortunately these are not
 # totally names (standards opaque IIRC) but this should work for us.
-LC_COLLATE:=en_US.UTF-8
+LC_COLLATE := en_US.UTF-8
 # Alas, macOS collation is broken and generates spurious differences.
 
-AWK ?= awk
-CAT ?= cat
-CURL ?= curl
-CUT ?= cut
-DIFF ?= diff
-GIT ?= git
-HEAD ?= head
-GREP ?= grep
-JQ ?= jq
 SED ?= sed
 SORT ?= sort
-TOUCH ?= touch
 UNIQ ?= uniq
 ifeq ($(UNAME), Darwin)
 	SED := gsed
@@ -56,14 +46,14 @@ endif
 
 .PHONY: lint
 lint:
-	$(GIT) grep -l '^#!/usr/bin/env bash' | xargs shellcheck
-	$(GIT) grep -l '^#!/usr/bin/env bash' | xargs shfmt -i 0 -w
+	git grep -l '^#!/usr/bin/env bash' | xargs shellcheck
+	git grep -l '^#!/usr/bin/env bash' | xargs shfmt -i 0 -w
 
 .PHONY: assert-copyright
 assert-copyright:
-	@$(DIFF) -u \
+	@diff -u \
 		--label a/copyright/gimme \
-		<($(AWK) 'BEGIN { FS="="; } /^readonly GIMME_COPYRIGHT/ { gsub(/"/, "", $$2); print $$2 }' gimme) \
+		<(awk 'BEGIN { FS="="; } /^readonly GIMME_COPYRIGHT/ { gsub(/"/, "", $$2); print $$2 }' gimme) \
 		--label b/copyright/LICENSE \
 		<(awk '/^Copyright/ { print $$0 }' LICENSE)
 
@@ -80,10 +70,10 @@ update-binary-versions: force-update-versions $(KNOWN_BINARY_VERSIONS_FILES)
 
 .testdata/binary-%: .testdata/object-urls
 	$(RM) $@
-	$(CAT) .testdata/stubheader-all > $@
-	$(CAT) $< | \
-		$(GREP) -E "$(lastword $(subst -, ,$@)).*tar\.gz$$" | \
-		$(AWK) -F/ '{ print $$9 }' | \
+	cat .testdata/stubheader-all > $@
+	cat $< | \
+		grep -E "$(lastword $(subst -, ,$@)).*tar\.gz$$" | \
+		awk -F/ '{ print $$5 }' | \
 		$(SED) "s/\.$(lastword $(subst -, ,$@)).*//;s/^go//" | \
 		$(SORT) -r | $(UNIQ) >> $@
 
@@ -92,9 +82,9 @@ update-binary-versions: force-update-versions $(KNOWN_BINARY_VERSIONS_FILES)
 
 .testdata/sample-binary-%: .testdata/binary-%
 	$(RM) $@
-	$(CAT) .testdata/stubheader-sample > $@
+	cat .testdata/stubheader-sample > $@
 	for prefix in $$($(SED_STRIP_COMMENTS) $< | $(SED) -En 's/^([0-9]+\.[0-9]+)(\..*)?$$/\1/p' | $(REV_VERSION_SORT) | $(UNIQ)) ; do \
-		$(GREP) "^$${prefix}" $< | $(GREP) -vE 'rc|beta' | $(REV_VERSION_SORT) | $(HEAD) -1 >> $@ ; \
+		grep "^$${prefix}" $< | grep -vE 'rc|beta' | $(REV_VERSION_SORT) | head -1 >> $@ ; \
 	done
 
 CONTRIBUTORS:
@@ -102,4 +92,4 @@ ifeq ($(UNAME), Darwin)
 	$(error macOS appears to have broken collation and will make spurious differences)
 endif
 	@echo 'gimme was built by these wonderful humans:' >$@
-	@$(GIT) log --format=%an | $(SORT) | $(UNIQ) | $(SED) 's/^/- /' >>$@
+	@git log --format=%an | $(SORT) | $(UNIQ) | $(SED) 's/^/- /' >>$@

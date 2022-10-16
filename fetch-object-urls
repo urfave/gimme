@@ -3,15 +3,15 @@
 import json
 import sys
 
-if sys.version_info < (3,6):
-  raise Exception('Need at least Python 3.6 for this tool')
-  # https://docs.python.org/3/whatsnew/3.6.html
-  # > json.load() and json.loads() now support binary input.
+if sys.version_info < (3, 6):
+    raise Exception("Need at least Python 3.6 for this tool")
+    # https://docs.python.org/3/whatsnew/3.6.html
+    # > json.load() and json.loads() now support binary input.
 
+from html.parser import HTMLParser
 from urllib.request import urlopen
-from urllib.parse import quote as urlquote
 
-DEFAULT_BASE_URL = 'https://www.googleapis.com/storage/v1/b/golang/o'
+DEFAULT_BASE_URL = "https://go.dev/dl/"
 
 
 def main():
@@ -20,34 +20,32 @@ def main():
     return 0
 
 
-def _fetch_links(base_url=DEFAULT_BASE_URL, max_fetch=5):
-    n_fetch = 1
-    first_page = _fetch_page(base_url=base_url)
-    for self_link in _page_self_links(first_page):
-        yield self_link
+class GoDevDLParser(HTMLParser):
+    def __init__(self, base_url=DEFAULT_BASE_URL, *args, **kwargs):
+        super(GoDevDLParser, self).__init__(*args, **kwargs)
 
-    tok = str(first_page.get('nextPageToken', '')).strip()
-    while tok != '' and n_fetch < max_fetch:
-        page = _fetch_page(next_page_token=tok)
-        tok = str(page.get('nextPageToken', '')).strip()
-        for self_link in _page_self_links(page):
-            yield self_link
-        n_fetch += 1
+        self.urls = []
+        self.base_url = base_url
 
+    def handle_starttag(self, tag, attrs):
+        if tag != "a":
+            return
 
-def _fetch_page(next_page_token='', base_url=DEFAULT_BASE_URL):
-    url = base_url
-    if next_page_token.strip() != '':
-        url = '{}?pageToken={}'.format(url, urlquote(next_page_token))
-    return json.load(urlopen(url))
+        attr_dict = dict(attrs)
+        if "href" not in attr_dict or attr_dict.get("class") != "download":
+            return
+
+        self.urls.append(
+            "/".join([self.base_url.rstrip("/dl/"), attr_dict["href"].lstrip("/")])
+        )
 
 
-def _page_self_links(page):
-    for item in page.get('items', []):
-        self_link = item.get('selfLink')
-        if self_link is not None:
-            yield self_link
+def _fetch_links(base_url=DEFAULT_BASE_URL):
+    parser = GoDevDLParser()
+    parser.feed(urlopen(base_url).read().decode("utf-8"))
+
+    return parser.urls
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
