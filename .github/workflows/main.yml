@@ -32,6 +32,7 @@ jobs:
           GO_VERSIONS="$(sed -n -e '/^[^#]/p' < .testdata/sample-binary-$UNAME) $(sed -n -e '/^[^#]/p' < .testdata/source-$UNAME)"
           printf 'GO_VERSIONS=%s\n' "$(echo "${GO_VERSIONS}" | tr '\n' ' ')" | tee -a "${GITHUB_ENV}"
       - run: printf 'PATH=%s\n' "${HOME}/bin:${PATH}" | tee -a "${GITHUB_ENV}"
+      - run: mkdir -p "${HOME}/bin"
       - run:
           if [ $UNAME = linux ] && [[ $(shellcheck --version | awk '/^version:/ { print $2 }') != 0.4.7 ]] ; then
             curl -sSL -o "${GIMME_TMP}/shellcheck.tar.xz" "${SHELLCHECK_URL}";
