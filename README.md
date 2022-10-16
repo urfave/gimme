@@ -1,4 +1,4 @@
-# gimme [![Build Status](https://travis-ci.com/travis-ci/gimme.svg?branch=master)](https://travis-ci.com/travis-ci/gimme)
+# gimme
 
 Install go, yay!
 
@@ -11,7 +11,7 @@ Install from github:
 ``` bash
 # assumes ~/bin exists and is in $PATH, so adjust accordingly!
 
-curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
+curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/urfave/gimme/main/gimme
 chmod +x ~/bin/gimme
 ```
 
@@ -67,7 +67,7 @@ source ~/.gimme/envs/go1.4.env
 Or run without installing gimme:
 
 ``` bash
-eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=1.4 bash)"
+eval "$(curl -sL https://raw.githubusercontent.com/urfave/gimme/main/gimme | GIMME_GO_VERSION=1.4 bash)"
 ```
 
 To install and use the current stable release of Go:
@@ -126,25 +126,6 @@ gimme --version
 # or even
 
 gimme version
-```
-
-### `.travis.yml`
-
-The original goal of this project was trivial cross-compilation within Travis.  The following is an example `.travis.yml` file to accomplish this for a normal Go project:
-
-```yaml
-language: go
-
-env:
-    - GIMME_OS=linux GIMME_ARCH=amd64
-    - GIMME_OS=darwin GIMME_ARCH=amd64
-    - GIMME_OS=windows GIMME_ARCH=amd64
-
-install:
-    - go get -d -v ./...
-
-script:
-    - go build -v ./...
 ```
 
 ## Available Versions

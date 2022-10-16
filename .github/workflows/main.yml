@@ -1,0 +1,51 @@
+name: main
+on:
+  push:
+    branches: [main]
+    tags: [v*]
+  pull_request:
+    branches: [main]
+env:
+  GO_BOOTSTRAP_VERSION: 1.17.13
+  SHELLCHECK_URL: "https://www.googleapis.com/download/storage/v1/b/shellcheck/o/shellcheck-v0.4.7.linux.x86_64.tar.xz?alt=media"
+  SHFMT_URL: "https://github.com/mvdan/sh/releases/download/v2.2.0/shfmt_v2.2.0_linux_amd64"
+jobs:
+  build:
+    strategy:
+      matrix:
+        env:
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            target: native
+        # TODO: more matrix entries
+    runs-on: ${{ matrix.env.runner }}
+    env:
+      TARGET: ${{ matrix.env.target }}
+      GOOS: ${{ matrix.env.goos }}
+      GOARCH: ${{ matrix.env.goarch }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: printf 'GIMME_TMP=%s\n' "${RUNNER_TEMP}" | tee -a "${GITHUB_ENV}"
+      - run: printf 'UNAME=%s\n' "$(uname | tr '[:upper:]' '[:lower:]')" | tee -a "${GITHUB_ENV}"
+      - run: printf 'GO_VERSIONS=%s\n' "$(sed -n -e '/^[^#]/p' < .testdata/sample-binary-$UNAME) $(sed -n -e '/^[^#]/p' < .testdata/source-$UNAME)" | tee -a "${GITHUB_ENV}"
+      - run: printf 'PATH=%s\n' "${HOME}/bin:${PATH}" | tee -a "${GITHUB_ENV}"
+      - run:
+          if [ $UNAME = linux ] && [[ $(shellcheck --version | awk '/^version:/ { print $2 }') != 0.4.7 ]] ; then
+            curl -sSL -o "${GIMME_TMP}/shellcheck.tar.xz" "${SHELLCHECK_URL}";
+            tar -C "${HOME}/bin" --exclude="*.txt" --strip-components=1 -xf "${GIMME_TMP}/shellcheck.tar.xz";
+            shellcheck --version;
+          fi
+      - run: 
+          if [ $UNAME = linux ] && [[ $(shfmt -version 2>/dev/null) != v2.2.0 ]] ; then
+            curl -sSL "${SHFMT_URL}" -o "${HOME}/bin/shfmt";
+            chmod +x "${HOME}/bin/shfmt";
+            shfmt -version;
+          fi
+      - run: if [ $UNAME = linux ]; then make lint; fi
+      - run: git diff --exit-code
+      - run: git diff --cached --exit-code
+      - run: ./gimme -h
+      - run: ./gimme -V
+      - run: ./runtests "${TARGET}" "${GO_BOOTSTRAP_VERSION}" ${GO_VERSIONS}
+      - run: ./gimme -l
