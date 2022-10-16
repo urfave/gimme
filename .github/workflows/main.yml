@@ -28,7 +28,9 @@ jobs:
       - uses: actions/checkout@v3
       - run: printf 'GIMME_TMP=%s\n' "${RUNNER_TEMP}" | tee -a "${GITHUB_ENV}"
       - run: printf 'UNAME=%s\n' "$(uname | tr '[:upper:]' '[:lower:]')" | tee -a "${GITHUB_ENV}"
-      - run: printf 'GO_VERSIONS=%s\n' "$(sed -n -e '/^[^#]/p' < .testdata/sample-binary-$UNAME) $(sed -n -e '/^[^#]/p' < .testdata/source-$UNAME)" | tee -a "${GITHUB_ENV}"
+      - run: |
+          GO_VERSIONS="$(sed -n -e '/^[^#]/p' < .testdata/sample-binary-$UNAME) $(sed -n -e '/^[^#]/p' < .testdata/source-$UNAME)"
+          printf 'GO_VERSIONS=%s\n' "$(echo "${GO_VERSIONS}" | tr '\n' ' ')" | tee -a "${GITHUB_ENV}"
       - run: printf 'PATH=%s\n' "${HOME}/bin:${PATH}" | tee -a "${GITHUB_ENV}"
       - run:
           if [ $UNAME = linux ] && [[ $(shellcheck --version | awk '/^version:/ { print $2 }') != 0.4.7 ]] ; then
