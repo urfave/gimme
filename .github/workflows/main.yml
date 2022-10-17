@@ -18,18 +18,18 @@ jobs:
             goos: linux
             goarch: amd64
             target: native
-          - runner: ubuntu-latest
-            goos: linux
-            goarch: arm64
-            target: arm64
+          # - runner: ubuntu-latest
+          #   goos: linux
+          #   goarch: arm64
+          #   target: arm64
           - runner: macos-latest
             goos: darwin
             goarch: amd64
             target: native
-          - runner: macos-latest
-            goos: darwin
-            goarch: arm64
-            target: arm64
+          # - runner: macos-latest
+          #   goos: darwin
+          #   goarch: arm64
+          #   target: arm64
     runs-on: ${{ matrix.env.runner }}
     env:
       TARGET: ${{ matrix.env.target }}
