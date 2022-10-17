@@ -67,5 +67,6 @@ jobs:
       - run: git diff --cached --exit-code
       - run: ./gimme -h
       - run: ./gimme -V
+      - run: ./gimme -l
       - run: ./runtests "${TARGET}" "${GO_BOOTSTRAP_VERSION}" ${GO_VERSIONS}
       - run: ./gimme -l
