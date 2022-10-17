@@ -31,7 +31,7 @@ can_resolve_version() {
 	local ev r
 	ev=0
 	r="$(./gimme --resolve "${want}" 2>/dev/null)" || ev=$?
-	if ! [[ -n "${r}" ]]; then
+	if [[ -z "${r}" ]]; then
 		die "no output resolving input version '${want}'"
 	fi
 	case $ev in
@@ -89,7 +89,7 @@ _test_arm64() {
 			echo "---> skipping ${v} because it probably won't work o_o"
 			continue
 		fi
-		if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cgo=1; else cgo=0; fi
+		if [[ "$RUNNER_OS" == "Linux" ]]; then cgo=1; else cgo=0; fi
 		echo "---> eval \$(GIMME_OS=linux GIMME_ARCH=arm64 GIMME_CGO_ENABLED=$cgo ./gimme $v)"
 		(
 			eval "$(GIMME_OS=linux GIMME_ARCH=arm64 GIMME_CGO_ENABLED=$cgo ./gimme "${v}")"
