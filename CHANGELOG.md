@@ -1,3 +1,7 @@
+> **NOTE**: This file is no longer actively maintained. For
+> releases 1.5.4+ please refer to the relevant github releases page
+> for changelog-style notes.
+
 # Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
