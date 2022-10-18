@@ -82,9 +82,9 @@ To install the previous minor release of Go:
 gimme oldstable
 ```
 
-To install the most recent patch of relase specified in the go.mod file:
+To install the most recent patch of the release specified in the `go.mod` file:
 
-```
+``` bash
 gimme module
 ```
 
