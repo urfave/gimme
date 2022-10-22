@@ -35,6 +35,7 @@ jobs:
       TARGET: ${{ matrix.env.target }}
       GOOS: ${{ matrix.env.goos }}
       GOARCH: ${{ matrix.env.goarch }}
+      GIMME_MODULE_PREFIX: .testdata/
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
