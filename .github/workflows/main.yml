@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: gimme 1.19.x | tee -a "${GITHUB_ENV}"
+      - run: ./gimme 1.19.x | grep ^export | tee -a "${GITHUB_ENV}"
       - id: env
         run: make matrix
     outputs:
@@ -24,7 +24,7 @@ jobs:
     needs: [matrix]
     strategy:
       matrix:
-        env: ${{ steps.matrix.env }}
+        env: ${{ fromJson(needs.matrix.outputs.env) }}
     runs-on: ${{ matrix.env.runner }}
     env:
       TARGET: ${{ matrix.env.target }}
