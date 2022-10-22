@@ -57,6 +57,10 @@ assert-copyright:
 		--label b/copyright/LICENSE \
 		<(awk '/^Copyright/ { print $$0 }' LICENSE)
 
+.PHONY: matrix
+matrix:
+	go run ./generate-matrix-json.go
+
 .PHONY: remove-object-urls
 remove-object-urls:
 	$(RM) .testdata/object-urls
