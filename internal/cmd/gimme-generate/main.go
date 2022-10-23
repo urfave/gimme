@@ -19,10 +19,8 @@ func main() {
 		Name:        "gimme-generate",
 		Description: "internal generate-y tool for urfave/gimme",
 		Commands: []*cli.Command{
-			internal.BuildGoLinksCommand(),
 			internal.BuildMatrixJSONCommand(),
-			internal.BuildBinaryListCommand(),
-			internal.BuildSampleBinaryListCommand(),
+			internal.BuildSampleVersionsCommand(),
 		},
 	}
 

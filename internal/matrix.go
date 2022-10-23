@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/urfave/cli/v2"
 )
@@ -21,30 +20,25 @@ func BuildMatrixJSONCommand() *cli.Command {
 	return &cli.Command{
 		Name: "matrix-json",
 		Flags: []cli.Flag{
-			&cli.PathFlag{Name: "top-dir", Value: "./"},
+			&cli.PathFlag{Name: "from", Value: "./.testdata/sample-versions.txt"},
 		},
 		Action: func(cCtx *cli.Context) error {
-			return generateMatrixJSON(cCtx.Context, cCtx.Path("top-dir"))
+			return generateMatrixJSON(cCtx.Context, cCtx.Path("from"))
 		},
 	}
 }
 
-func generateMatrixJSON(ctx context.Context, topDir string) error {
-	runnerGoos := map[string]string{
-		"ubuntu-latest": "linux",
-		"macos-latest":  "darwin",
-	}
-
+func generateMatrixJSON(ctx context.Context, sampleVersions string) error {
 	matrixEntries := []matrixEntry{}
 
 	for _, runner := range []string{"ubuntu-latest", "macos-latest"} {
-		for _, target := range []string{"local"} { // FIXME: maybe get `arm` working?
-			runnerVersions, err := readGoVersions(ctx, topDir, runnerGoos[runner])
-			if err != nil {
-				return err
-			}
+		sampleVersionsSlice, err := readCommentFiltered(sampleVersions)
+		if err != nil {
+			return err
+		}
 
-			for _, v := range runnerVersions {
+		for _, target := range []string{"local"} { // FIXME: maybe get `arm` working?
+			for _, v := range append([]string{"stable", "module", "master"}, sampleVersionsSlice...) {
 				matrixEntries = append(
 					matrixEntries,
 					matrixEntry{
@@ -93,15 +87,4 @@ func generateMatrixJSON(ctx context.Context, topDir string) error {
 	}
 
 	return nil
-}
-
-func readGoVersions(ctx context.Context, topDir, goos string) ([]string, error) {
-	versions := []string{}
-
-	binVersions, err := readCommentFiltered(filepath.Join(topDir, ".testdata", "sample-binary-"+goos))
-	if err != nil {
-		return nil, err
-	}
-
-	return append(append(versions, binVersions...), "stable", "module", "master"), nil
 }

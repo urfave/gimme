@@ -2,18 +2,13 @@ SHELL := bash
 .DEFAULT_GOAL := all
 
 GIMME_GENERATE := ./gimme-generate
-KNOWN_BINARY_VERSIONS_FILES := \
-	.testdata/binary-darwin \
-	.testdata/binary-linux \
-	.testdata/sample-binary-darwin \
-	.testdata/sample-binary-linux
 
 .PHONY: all
 all: lint assert-copyright generate
 
 .PHONY: clean
 clean:
-	$(RM) $(KNOWN_BINARY_VERSIONS_FILES) $(GIMME_GENERATE) .testdata/object-urls
+	$(RM) $(GIMME_GENERATE) .testdata/known-versions.txt .testdata/sample-versions.txt
 
 .PHONY: lint
 lint:
@@ -21,7 +16,7 @@ lint:
 	git grep -l '^#!/usr/bin/env bash' | xargs shfmt -i 0 -w
 
 .PHONY: generate
-generate: $(KNOWN_BINARY_VERSIONS_FILES)
+generate: .testdata/sample-versions.txt
 	@true
 
 $(GIMME_GENERATE): $(shell git ls-files '*.go')
@@ -40,25 +35,22 @@ assert-no-diff:
 	git diff --exit-code && git diff --cached --exit-code
 
 .PHONY: matrix
-matrix: $(GIMME_GENERATE)
-	$(GIMME_GENERATE) matrix-json
+matrix: .testdata/sample-versions.txt $(GIMME_GENERATE)
+	$(GIMME_GENERATE) matrix-json --from $<
 
-.PHONY: remove-object-urls
-remove-object-urls:
-	$(RM) .testdata/object-urls
+.PHONY: remove-known-versions
+remove-known-versions:
+	$(RM) .testdata/known-versions.txt
 
 .PHONY: force-update-versions
-force-update-versions: remove-object-urls .testdata/object-urls
+force-update-versions: remove-known-versions .testdata/known-versions.txt
 	@true
 
-.PHONY: update-binary-versions
-update-binary-versions: force-update-versions $(KNOWN_BINARY_VERSIONS_FILES)
+.PHONY: update-versions
+update-versions: force-update-versions .testdata/sample-versions.txt
 
-.testdata/binary-%: .testdata/object-urls $(GIMME_GENERATE)
-	$(GIMME_GENERATE) binary-list --os $* --from $^ >$@
+.testdata/known-versions.txt: $(GIMME_GENERATE)
+	GIMME_VERSION_PREFIX=$(CURDIR)/.testdata ./gimme -k -l >/dev/null
 
-.testdata/object-urls: $(GIMME_GENERATE)
-	$(GIMME_GENERATE) go-links >$@
-
-.testdata/sample-binary-%: .testdata/binary-% $(GIMME_GENERATE)
-	$(GIMME_GENERATE) sample-binary-list --from $^ >$@
+.testdata/sample-versions.txt: .testdata/known-versions.txt $(GIMME_GENERATE)
+	$(GIMME_GENERATE) sample-versions --from $< >$@
