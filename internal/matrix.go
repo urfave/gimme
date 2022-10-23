@@ -1,17 +1,14 @@
-package main
+package internal
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
-	"os/exec"
-	"os/signal"
 	"path/filepath"
-	"strings"
-	"syscall"
+
+	"github.com/urfave/cli/v2"
 )
 
 type matrixEntry struct {
@@ -20,29 +17,31 @@ type matrixEntry struct {
 	Version string `json:"version"`
 }
 
-func main() {
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-
-	topBytes, err := exec.CommandContext(ctx, "git", "rev-parse", "--show-toplevel").Output()
-	if err != nil {
-		log.Fatal(err)
+func BuildMatrixJSONCommand() *cli.Command {
+	return &cli.Command{
+		Name: "matrix-json",
+		Flags: []cli.Flag{
+			&cli.PathFlag{Name: "top-dir", Value: "./"},
+		},
+		Action: func(cCtx *cli.Context) error {
+			return generateMatrixJSON(cCtx.Context, cCtx.Path("top-dir"))
+		},
 	}
+}
 
+func generateMatrixJSON(ctx context.Context, topDir string) error {
 	runnerGoos := map[string]string{
 		"ubuntu-latest": "linux",
 		"macos-latest":  "darwin",
 	}
 
-	top := strings.TrimSpace(string(topBytes))
-
 	matrixEntries := []matrixEntry{}
 
 	for _, runner := range []string{"ubuntu-latest", "macos-latest"} {
 		for _, target := range []string{"local"} { // FIXME: maybe get `arm` working?
-			runnerVersions, err := readGoVersions(ctx, top, runnerGoos[runner])
+			runnerVersions, err := readGoVersions(ctx, topDir, runnerGoos[runner])
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 
 			for _, v := range runnerVersions {
@@ -65,7 +64,7 @@ func main() {
 		gho, err := os.Create(v)
 
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		defer gho.Close()
@@ -76,7 +75,7 @@ func main() {
 
 	if asGithubOutput {
 		if _, err := fmt.Fprintf(out, "env<<EOF\n"); err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
 
@@ -84,55 +83,32 @@ func main() {
 	enc.SetIndent("", "  ")
 
 	if err := enc.Encode(matrixEntries); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if asGithubOutput {
 		if _, err := fmt.Fprintf(out, "EOF\n"); err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
+
+	return nil
 }
 
-func readGoVersions(ctx context.Context, top, goos string) ([]string, error) {
+func readGoVersions(ctx context.Context, topDir, goos string) ([]string, error) {
 	versions := []string{}
 
-	binVersions, err := readCommentFiltered(filepath.Join(top, ".testdata", "sample-binary-"+goos))
+	binVersions, err := readCommentFiltered(filepath.Join(topDir, ".testdata", "sample-binary-"+goos))
 	if err != nil {
 		return nil, err
 	}
 
 	versions = append(versions, binVersions...)
 
-	sourceVersions, err := readCommentFiltered(filepath.Join(top, ".testdata", "source-"+goos))
+	sourceVersions, err := readCommentFiltered(filepath.Join(topDir, ".testdata", "source-"+goos))
 	if err != nil {
 		return nil, err
 	}
 
 	return append(versions, sourceVersions...), nil
-}
-
-func readCommentFiltered(filename string) ([]string, error) {
-	fileBytes, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	keepers := []string{}
-
-	for _, line := range strings.Split(string(fileBytes), "\n") {
-		line = strings.TrimSpace(line)
-
-		if len(line) == 0 {
-			continue
-		}
-
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		keepers = append(keepers, line)
-	}
-
-	return keepers, nil
 }

@@ -1,3 +1,3 @@
-module githib.com/travis-ci/gimme/testdata
+module githib.com/urfave/gimme/testdata
 
 go 1.17

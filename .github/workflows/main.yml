@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: ./gimme 1.19.x | grep ^export | tee -a "${GITHUB_ENV}"
+      - run: ./gimme stable | grep ^export | tee -a "${GITHUB_ENV}"
       - id: env
         run: make matrix
     outputs:
@@ -34,21 +34,22 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${HOME}/.gimme
-          key: "${{ runner.os }}-${{ matrix.env.target }}-gimme-${{ hashFiles('.testdata/*') }}"
+          key: "${{ runner.os }}-${{ matrix.env.target }}-gimme-${{ hashFiles('.testdata/sample-binary-*', '.testdata/source-*') }}"
           restore-keys: |
             ${{ runner.os }}-${{ matrix.env.target }}-gimme-
-      - run: printf 'GIMME_TMP=%s\n' "${RUNNER_TEMP}" | tee -a "${GITHUB_ENV}"
-      - run: printf 'PATH=%s\n' "${HOME}/bin:${PATH}" | tee -a "${GITHUB_ENV}"
-      - run: mkdir -p "${HOME}/bin"
-      - if: runner.os == 'Linux'
+      - run: |
+          printf 'GIMME_TMP=%s\n' "${RUNNER_TEMP}" | tee -a "${GITHUB_ENV}"
+          printf 'PATH=%s\n' "${HOME}/bin:${PATH}" | tee -a "${GITHUB_ENV}"
+          mkdir -p "${HOME}/bin"
+      - name: ensure shell linting tools
+        if: runner.os == 'Linux'
         run: |
           if [[ $(shellcheck --version | awk '/^version:/ { print $2 }') != 0.7.1 ]] ; then
             curl -sSL -o "${GIMME_TMP}/shellcheck.tar.xz" "${SHELLCHECK_URL}";
             tar -C "${HOME}/bin" --exclude="*.txt" --strip-components=1 -xf "${GIMME_TMP}/shellcheck.tar.xz";
             shellcheck --version;
-          fi
-      - if: runner.os == 'Linux'
-        run: |
+          fi;
+
           if [[ $(shfmt -version 2>/dev/null) != v3.5.1 ]] ; then
             curl -sSL "${SHFMT_URL}" -o "${HOME}/bin/shfmt";
             chmod +x "${HOME}/bin/shfmt";
@@ -56,8 +57,7 @@ jobs:
           fi
       - if: runner.os == 'Linux'
         run: make lint
-      - run: git diff --exit-code
-      - run: git diff --cached --exit-code
+      - run: make assert-no-diff
       - run: ./gimme -h
       - run: ./gimme -V
       - run: ./gimme -l
