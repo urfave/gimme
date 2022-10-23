@@ -103,12 +103,5 @@ func readGoVersions(ctx context.Context, topDir, goos string) ([]string, error) 
 		return nil, err
 	}
 
-	versions = append(versions, binVersions...)
-
-	sourceVersions, err := readCommentFiltered(filepath.Join(topDir, ".testdata", "source-"+goos))
-	if err != nil {
-		return nil, err
-	}
-
-	return append(versions, sourceVersions...), nil
+	return append(append(versions, binVersions...), "stable", "module", "master"), nil
 }
