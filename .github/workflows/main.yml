@@ -21,9 +21,9 @@ jobs:
             ~/.gimme
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: "${{ runner.os }}-${{ matrix.env.target }}-gimme-${{ hashFiles('go.sum', '.testdata/sample-binary-*') }}"
+          key: "${{ runner.os }}-local-gimme-${{ hashFiles('go.sum', '.testdata/sample-binary-*') }}"
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.env.target }}-gimme-
+            ${{ runner.os }}-local-gimme-
       - run: ./gimme stable | grep ^export | tee -a "${GITHUB_ENV}"
       - id: env
         run: make matrix
