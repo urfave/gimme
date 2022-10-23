@@ -80,11 +80,11 @@ func generateSampleBinaryList(ctx context.Context, out io.Writer, minBin, fromPa
 	keepersMap := map[string]struct{}{}
 
 	for mmv := range keepersByMajorMinor {
-		bv := semver.ByVersion(keepersByMajorMinor[mmv])
+		kbmmv := keepersByMajorMinor[mmv]
 
-		sort.Strings(bv)
+		sort.Sort(sort.Reverse(semver.ByVersion(kbmmv)))
 
-		keepersMap[withoutV(bv[len(bv)-1])] = struct{}{}
+		keepersMap[withoutV(kbmmv[0])] = struct{}{}
 	}
 
 	return writeLines(out, append([]string{sampleStubHeader}, revSortMapToSlice(keepersMap)...))
