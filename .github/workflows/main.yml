@@ -21,9 +21,9 @@ jobs:
             ~/.gimme
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: "${{ runner.os }}-local-gimme-${{ hashFiles('go.sum', '.testdata/sample-binary-*') }}"
+          key: "${{ runner.os }}-local-stable-gimme-${{ hashFiles('go.sum', '.testdata/sample-binary-*') }}"
           restore-keys: |
-            ${{ runner.os }}-local-gimme-
+            ${{ runner.os }}-local-stable-gimme-
       - run: ./gimme stable | grep ^export | tee -a "${GITHUB_ENV}"
       - id: env
         run: make matrix
@@ -47,9 +47,9 @@ jobs:
             ~/.gimme
             ~/go/pkg/mod
             ~/Library/Caches/go-build
-          key: "${{ runner.os }}-${{ matrix.env.target }}-gimme-${{ hashFiles('go.sum', '.testdata/sample-binary-*') }}"
+          key: "${{ runner.os }}-${{ matrix.env.target }}-${{ matrix.env.version }}-gimme-${{ hashFiles('go.sum', '.testdata/sample-binary-*') }}"
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.env.target }}-gimme-
+            ${{ runner.os }}-${{ matrix.env.target }}-${{ matrix.env.version }}-gimme-
       - if: runner.os == 'Linux'
         uses: actions/cache@v3
         with:
@@ -57,9 +57,9 @@ jobs:
             ~/.gimme
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: "${{ runner.os }}-${{ matrix.env.target }}-gimme-${{ hashFiles('go.sum', '.testdata/sample-binary-*') }}"
+          key: "${{ runner.os }}-${{ matrix.env.target }}-${{ matrix.env.version }}-gimme-${{ hashFiles('go.sum', '.testdata/sample-binary-*') }}"
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.env.target }}-gimme-
+            ${{ runner.os }}-${{ matrix.env.target }}-${{ matrix.env.version }}-gimme-
       - run: |
           printf 'GIMME_TMP=%s\n' "${RUNNER_TEMP}" | tee -a "${GITHUB_ENV}"
           printf 'PATH=%s\n' "${HOME}/bin:${PATH}" | tee -a "${GITHUB_ENV}"
@@ -86,4 +86,3 @@ jobs:
       - run: ./gimme -l
       - run: ./runtests "${TARGET}" "${GO_BOOTSTRAP_VERSION}" '${{ matrix.env.version }}'
       - run: ./gimme -l
-      - run: find ~/.gimme -maxdepth 2 -type d
