@@ -105,3 +105,27 @@ func withV(s string) string {
 func withoutV(s string) string {
 	return strings.TrimPrefix(s, "v")
 }
+
+func writeLines(w io.Writer, lines []string) error {
+	_, err := fmt.Fprintln(
+		w,
+		strings.Join(
+			lines,
+			"\n",
+		),
+	)
+
+	return err
+}
+
+func revSortMapToSlice(sl map[string]struct{}) []string {
+	uniq := []string{}
+
+	for s := range sl {
+		uniq = append(uniq, s)
+	}
+
+	sort.Sort(sort.Reverse(sort.StringSlice(uniq)))
+
+	return uniq
+}
