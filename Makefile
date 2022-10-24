@@ -35,8 +35,8 @@ assert-no-diff:
 	git diff --exit-code && git diff --cached --exit-code
 
 .PHONY: matrix
-matrix: .testdata/sample-versions.txt $(GIMME_GENERATE)
-	$(GIMME_GENERATE) matrix-json --from $<
+matrix: $(GIMME_GENERATE)
+	$(GIMME_GENERATE) matrix-json --from .testdata/sample-versions.txt
 
 .PHONY: remove-known-versions
 remove-known-versions:
