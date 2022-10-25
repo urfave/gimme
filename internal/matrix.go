@@ -56,7 +56,6 @@ func generateMatrixJSON(ctx context.Context, sampleVersions string) error {
 
 	if v, ok := os.LookupEnv("GITHUB_OUTPUT"); ok {
 		gho, err := os.Create(v)
-
 		if err != nil {
 			return err
 		}

@@ -6,7 +6,9 @@
 # Listing all versions ever provides for quadratic test runtime as we expand
 # architectures and OSes. So we no longer do that.
 #
-# Instead we include all versions of the current release series plus two.
+# Instead we include the highest patch release from each of the three supported
+# minor versions plus the highest patch release from the two most recent
+# unsupported minor versions.
 
 #
 
