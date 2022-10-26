@@ -19,7 +19,7 @@ lint:
 generate: .testdata/sample-versions.txt
 	@true
 
-$(GIMME_GENERATE): $(shell git ls-files '*.go')
+$(GIMME_GENERATE): $(shell git ls-files '*.go') internal/sample-stub-header
 	go build -o $@ ./internal/cmd/gimme-generate/
 
 .PHONY: assert-copyright
