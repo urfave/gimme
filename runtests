@@ -63,7 +63,7 @@ sanity_checks() {
 	done
 }
 
-_test_native() {
+_test_local() {
 	for v in "${@}"; do
 		echo "---> eval \$(./gimme ${v})"
 		(

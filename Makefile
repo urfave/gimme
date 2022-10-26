@@ -1,53 +1,26 @@
 SHELL := bash
-UNAME := $(shell uname)
-VERSION := $(shell git describe --always --tags)
 .DEFAULT_GOAL := all
 
-# Affects sorting for CONTRIBUTORS file; unfortunately these are not
-# totally names (standards opaque IIRC) but this should work for us.
-LC_COLLATE := en_US.UTF-8
-# Alas, macOS collation is broken and generates spurious differences.
-
-SED ?= sed
-SORT ?= sort
-UNIQ ?= uniq
-ifeq ($(UNAME), Darwin)
-	SED := gsed
-	SORT := gsort
-	UNIQ := guniq
-endif
-
-ifeq "$(shell $(SORT) --version-sort </dev/null >/dev/null 2>&1 || echo no)" "no"
-	_ := $(warning "$(SORT) --version-sort not available, falling back to shell")
-	REV_VERSION_SORT := $(SED) -E 's/\.([0-9](\.|$$))/.00\1/g; s/\.([0-9][0-9](\.|$$))/.0\1/g' | $(SORT) --general-numeric-sort -r | $(SED) 's/\.00*/./g'
-else
-	REV_VERSION_SORT := $(SORT) --version-sort -r
-endif
-
-SED_STRIP_COMMENTS ?= $(SED) -n -e '/^[^\#]/p'
-
-KNOWN_BINARY_VERSIONS_FILES := \
-	.testdata/binary-darwin \
-	.testdata/binary-linux \
-	.testdata/sample-binary-darwin \
-	.testdata/sample-binary-linux
+GIMME_GENERATE := ./gimme-generate
 
 .PHONY: all
-all: lint CONTRIBUTORS assert-copyright $(KNOWN_BINARY_VERSIONS_FILES)
+all: lint assert-copyright generate
 
 .PHONY: clean
 clean:
-	$(RM) $(KNOWN_BINARY_VERSIONS_FILES) .testdata/object-urls
-ifeq ($(UNAME), Darwin)
-	$(warning Not deleting CONTRIBUTORS on macOS, locale sorting is broken)
-else
-	$(RM) CONTRIBUTORS
-endif
+	$(RM) $(GIMME_GENERATE) .testdata/known-versions.txt .testdata/sample-versions.txt
 
 .PHONY: lint
 lint:
 	git grep -l '^#!/usr/bin/env bash' | xargs shellcheck
 	git grep -l '^#!/usr/bin/env bash' | xargs shfmt -i 0 -w
+
+.PHONY: generate
+generate: .testdata/sample-versions.txt
+	@true
+
+$(GIMME_GENERATE): $(shell git ls-files '*.go') internal/sample-stub-header
+	go build -o $@ ./internal/cmd/gimme-generate/
 
 .PHONY: assert-copyright
 assert-copyright:
@@ -57,39 +30,27 @@ assert-copyright:
 		--label b/copyright/LICENSE \
 		<(awk '/^Copyright/ { print $$0 }' LICENSE)
 
-.PHONY: remove-object-urls
-remove-object-urls:
-	$(RM) .testdata/object-urls
+.PHONY: assert-no-diff
+assert-no-diff:
+	git diff --exit-code && git diff --cached --exit-code
+
+.PHONY: matrix
+matrix: $(GIMME_GENERATE)
+	$(GIMME_GENERATE) matrix-json --from .testdata/sample-versions.txt
+
+.PHONY: remove-known-versions
+remove-known-versions:
+	$(RM) .testdata/known-versions.txt
 
 .PHONY: force-update-versions
-force-update-versions: remove-object-urls .testdata/object-urls
+force-update-versions: remove-known-versions .testdata/known-versions.txt
 	@true
 
-.PHONY: update-binary-versions
-update-binary-versions: force-update-versions $(KNOWN_BINARY_VERSIONS_FILES)
+.PHONY: update-versions
+update-versions: force-update-versions .testdata/sample-versions.txt
 
-.testdata/binary-%: .testdata/object-urls
-	$(RM) $@
-	cat .testdata/stubheader-all > $@
-	cat $< | \
-		grep -E "$(lastword $(subst -, ,$@)).*tar\.gz$$" | \
-		awk -F/ '{ print $$5 }' | \
-		$(SED) "s/\.$(lastword $(subst -, ,$@)).*//;s/^go//" | \
-		$(SORT) -r | $(UNIQ) >> $@
+.testdata/known-versions.txt: $(GIMME_GENERATE)
+	GIMME_VERSION_PREFIX=$(CURDIR)/.testdata ./gimme -k -l >/dev/null
 
-.testdata/object-urls:
-	./fetch-object-urls >$@
-
-.testdata/sample-binary-%: .testdata/binary-%
-	$(RM) $@
-	cat .testdata/stubheader-sample > $@
-	for prefix in $$($(SED_STRIP_COMMENTS) $< | $(SED) -En 's/^([0-9]+\.[0-9]+)(\..*)?$$/\1/p' | $(REV_VERSION_SORT) | $(UNIQ)) ; do \
-		grep "^$${prefix}" $< | grep -vE 'rc|beta' | $(REV_VERSION_SORT) | head -1 >> $@ ; \
-	done
-
-CONTRIBUTORS:
-ifeq ($(UNAME), Darwin)
-	$(error macOS appears to have broken collation and will make spurious differences)
-endif
-	@echo 'gimme was built by these wonderful humans:' >$@
-	@git log --format=%an | $(SORT) | $(UNIQ) | $(SED) 's/^/- /' >>$@
+.testdata/sample-versions.txt: .testdata/known-versions.txt $(GIMME_GENERATE)
+	$(GIMME_GENERATE) sample-versions --from $< >$@
