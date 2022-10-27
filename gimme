@@ -798,7 +798,7 @@ _to_goarch() {
 : "${GIMME_HOSTARCH:=$(_to_goarch "$(uname -m)")}"
 : "${GIMME_ENV_PREFIX:=${HOME}/.gimme/envs}"
 : "${GIMME_VERSION_PREFIX:=${HOME}/.gimme/versions}"
-: "${GIMME_TMP:=${TMPDIR:-/tmp/$(whoami)}/gimme}"
+: "${GIMME_TMP:=${HOME}/.gimme/tmp}"
 : "${GIMME_GO_GIT_REMOTE:=https://github.com/golang/go.git}"
 : "${GIMME_TYPE:=auto}" # 'auto', 'binary', 'source', or 'git'
 : "${GIMME_BINARY_OSX:=osx10.8}"
@@ -937,16 +937,18 @@ unset CC_FOR_TARGET
 # GO111MODULE breaks build of Go itself
 unset GO111MODULE
 
-mkdir -p "${GIMME_VERSION_PREFIX}" "${GIMME_ENV_PREFIX}"
+mkdir -p "${GIMME_VERSION_PREFIX}" "${GIMME_ENV_PREFIX}" "${GIMME_TMP}"
 # The envs dir stays small and provides a record of what had been installed
 # whereas the versions dir grows by hundreds of MB per version and is not
 # intended to support local modifications (as that subverts the point of gimme)
 # _and_ is a cache, so we're unilaterally declaring that the contents of
 # the versions dir should be excluded from system backups.
 _exclude_from_backups "${GIMME_VERSION_PREFIX}"
+_exclude_from_backups "${GIMME_TMP}"
 
 GIMME_VERSION_PREFIX="$(_realpath "${GIMME_VERSION_PREFIX}")"
 GIMME_ENV_PREFIX="$(_realpath "${GIMME_ENV_PREFIX}")"
+GIMME_TMP="$(_realpath "${GIMME_TMP}")"
 
 if ! case "${GIMME_TYPE}" in
 	binary) _try_existing binary || _try_binary "${GIMME_GO_VERSION}" "${GIMME_ARCH}" ;;
