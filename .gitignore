@@ -1,2 +1,6 @@
+.*.env
+.*.env.local
+.*envrc
+.envrc
 /.testdata/known-versions.txt
 /gimme-generate
