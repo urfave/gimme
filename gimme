@@ -55,7 +55,7 @@ set -o pipefail
 
 [[ ${GIMME_DEBUG} ]] && set -x
 
-readonly GIMME_VERSION="v1.6.0"
+readonly GIMME_VERSION="v1.7.1"
 readonly GIMME_COPYRIGHT="Copyright (c) 2022 gimme contributors"
 readonly GIMME_LICENSE_URL="https://raw.githubusercontent.com/urfave/gimme/${GIMME_VERSION}/LICENSE"
 export GIMME_VERSION
