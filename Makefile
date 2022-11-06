@@ -3,6 +3,8 @@ SHELL := bash
 
 GIMME_GENERATE := ./gimme-generate
 
+TAG_VERSION ?= notset
+
 .PHONY: all
 all: lint assert-copyright generate
 
@@ -18,6 +20,24 @@ lint:
 .PHONY: generate
 generate: .testdata/sample-versions.txt
 	@true
+
+.PHONY: tag
+tag: .assert-tag-version-defined .assert-tag-matches-source
+	git tag -s -a -m 'Release $(TAG_VERSION)' '$(TAG_VERSION)' $(TAG_REF)
+
+.PHONY: .assert-tag-version-defined
+.assert-tag-version-defined:
+ifeq ($(TAG_VERSION), notset)
+	$(error TAG_VERSION must be set)
+endif
+
+.PHONY: .assert-tag-matches-source
+.assert-tag-matches-source:
+	@diff -u \
+		--label a/version/gimme \
+		<(awk 'BEGIN { FS="="; } /^readonly GIMME_VERSION/ { gsub(/"/, "", $$2); print $$2 }' gimme) \
+		--label b/version/TAG_VERSION \
+		<(echo '$(TAG_VERSION)')
 
 $(GIMME_GENERATE): $(shell git ls-files '*.go') internal/sample-stub-header
 	go build -o $@ ./internal/cmd/gimme-generate/
