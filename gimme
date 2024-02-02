@@ -701,7 +701,15 @@ _get_module() {
 		die 'not a module'
 	fi
 	local version
-	version="$(awk '$1 == "go" { print $2 ".x"; exit }' "${GIMME_MODULE_PREFIX}go.mod")"
+	version="$(awk '$1 == "go" {
+		# Add ".x" suffix if only one ".".
+		if ($2 ~ /^[0-9]+\.[0-9]+$/) {
+			print $2 ".x";
+		} else {
+			print $2;
+		}
+		exit;
+	}' "${GIMME_MODULE_PREFIX}go.mod")"
 	if [ -z "$version" ]; then
 		die 'module has no go directive'
 	fi
