@@ -82,11 +82,17 @@ To install the previous minor release of Go:
 gimme oldstable
 ```
 
-To install the most recent patch of the release specified in the `go.mod` file:
+To install the release specified in the `go.mod` file:
 
 ``` bash
 gimme module
 ```
+
+If the `go` directive in the go.mod is in the form `go 1.21`,
+`gimme module` will install the latest patch version, e.g. `1.21.5`.
+However, if the `go` directive in go.mod is in the form `go 1.21.3`,
+`gimme module` will install the exact version, `1.21.3`.
+Note that the latter form is supported only by Go 1.21 or later.
 
 Or to install and use the development version (master branch) of Go:
 
