@@ -904,13 +904,26 @@ if [[ -n "${2}" ]]; then
 	GIMME_VERSION_PREFIX="${2}"
 fi
 
+case "${GIMME_GO_VERSION}" in
+stable) GIMME_GO_VERSION=$(_get_curr_stable) ;;
+oldstable) GIMME_GO_VERSION=$(_get_old_stable) ;;
+module) GIMME_GO_VERSION=$(_resolve_version module) ;;
+esac
+
+_assert_version_given "$@"
+
 case "${GIMME_ARCH}" in
 x86_64) GIMME_ARCH=amd64 ;;
 x86) GIMME_ARCH=386 ;;
 arm64)
-	if [[ "${GIMME_GO_VERSION}" != master && "$(_versint "${GIMME_GO_VERSION}")" < "$(_versint 1.5)" ]]; then
+	min_arm64_version=1.5
+	if [[ "${GIMME_HOSTOS}" == 'darwin' ]]; then
+		min_arm64_version=1.16
+	fi
+
+	if [[ "${GIMME_GO_VERSION}" != master && "$(_versint "${GIMME_GO_VERSION}")" < "$(_versint "$min_arm64_version")" ]]; then
 		echo >&2 "error: ${GIMME_ARCH} is not supported by this go version"
-		echo >&2 "try go1.5 or newer"
+		echo >&2 "try go${min_arm64_version} or newer"
 		exit 1
 	fi
 	if [[ "${GIMME_HOSTOS}" == "linux" && "${GIMME_HOSTARCH}" != "${GIMME_ARCH}" ]]; then
@@ -926,14 +939,6 @@ x86) GIMME_HOSTARCH=386 ;;
 arm64) ;;
 arm*) GIMME_HOSTARCH=arm ;;
 esac
-
-case "${GIMME_GO_VERSION}" in
-stable) GIMME_GO_VERSION=$(_get_curr_stable) ;;
-oldstable) GIMME_GO_VERSION=$(_get_old_stable) ;;
-module) GIMME_GO_VERSION=$(_resolve_version module) ;;
-esac
-
-_assert_version_given "$@"
 
 ((force_install)) && _wipe_version "${GIMME_GO_VERSION}"
 
