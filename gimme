@@ -652,7 +652,7 @@ _get_curr_stable() {
 		_update_stable "${stable}"
 	fi
 
-	cat "${stable}"
+	head -n 1 "${stable}"
 }
 
 _get_old_stable() {
