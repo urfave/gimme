@@ -38,6 +38,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-prebuild-
       - run: ./gimme module | grep ^export | tee -a "${GITHUB_ENV}"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
       - run: make gimme-generate
       - uses: actions/upload-artifact@v3
         with:
@@ -84,6 +87,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.env.target }}-${{ matrix.env.version }}-test-
             ${{ runner.os }}-${{ matrix.env.target }}-
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
       - uses: actions/download-artifact@v3
         with:
           name: gimme-generate-${{ runner.os }}

@@ -55,7 +55,7 @@ set -o pipefail
 
 [[ ${GIMME_DEBUG} ]] && set -x
 
-readonly GIMME_VERSION="v1.8.0"
+readonly GIMME_VERSION="v1.8.1"
 readonly GIMME_COPYRIGHT="Copyright (c) 2022 gimme contributors"
 readonly GIMME_LICENSE_URL="https://raw.githubusercontent.com/urfave/gimme/${GIMME_VERSION}/LICENSE"
 export GIMME_VERSION
@@ -523,13 +523,13 @@ _list_versions() {
 	local current_version
 	current_version="$(go env GOROOT 2>/dev/null)"
 	current_version="${current_version##*/go}"
-	current_version="${current_version%%.${GIMME_OS}.*}"
+	current_version="${current_version%%."${GIMME_OS}".*}"
 
 	# 1.1 1.10 1.2 is bad; zsh has `setopt numeric_glob_sort` but bash
 	# doesn't appear to have anything like that.
 	for d in "${GIMME_VERSION_PREFIX}/go"*".${GIMME_OS}."*; do
 		local cleaned="${d##*/go}"
-		cleaned="${cleaned%%.${GIMME_OS}.*}"
+		cleaned="${cleaned%%."${GIMME_OS}".*}"
 		echo "${cleaned}"
 	done | _version_sort | while read -r cleaned; do
 		echo -en "${cleaned}"
@@ -652,7 +652,7 @@ _get_curr_stable() {
 		_update_stable "${stable}"
 	fi
 
-	cat "${stable}"
+	head -n 1 "${stable}"
 }
 
 _get_old_stable() {
